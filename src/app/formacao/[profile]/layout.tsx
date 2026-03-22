@@ -3,8 +3,8 @@ import {SidebarInset, SidebarProvider} from "@/components/atoms/sidebar";
 import {AppSidebar} from "@/components/organisms/Sidebar";
 import {AppHeader} from "@/components/organisms/Header";
 import {getCachedMyAccount} from "../../cache/cached-my-account";
-
 import {getProfilesByUserAndAppCode} from "@/services/profiles/getProfilesByUserAndAppCode";
+import { USE_MOCK_DATA, mockMyAccount } from "@/services/mock/data";
 
 type ProfileLayoutProps = {
     children: ReactNode;
@@ -16,17 +16,21 @@ export default async function ProfileLayout({
                                                 params,
                                             }: ProfileLayoutProps) {
     const {profile} = await params;
-    const account: any = await getCachedMyAccount();
+    const account: any = await getCachedMyAccount() ?? (USE_MOCK_DATA ? mockMyAccount : null);
 
     if (!account) {
         return null;
     }
 
+    // Obter email e id do utilizador
+    const userEmail = account?.user?.email ?? account?.email;
+    const userId = account?.user?.user_id ?? account?.id;
+
     let profilesApi;
     try {
         profilesApi = await getProfilesByUserAndAppCode({
-            user_email: account?.email,
-            user_id: account?.id,
+            user_email: userEmail,
+            user_id: userId,
         });
     } catch {
         profilesApi = null;

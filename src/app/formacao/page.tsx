@@ -3,6 +3,7 @@ import { getProfilesByUserAndAppCode } from "@/services/profiles/getProfilesByUs
 import { buildProfilesFromResponse } from "@/services/profiles/getProfilesByUserAndAppCode/utils";
 import { getCachedMyAccount } from "../cache/cached-my-account";
 import RedirectWithSkeleton from "@/components/organisms/RedirectWithSkeleton";
+import { USE_MOCK_DATA, mockMyAccount } from "@/services/mock/data";
 
 export default async function IndexPage({
   searchParams,
@@ -10,14 +11,19 @@ export default async function IndexPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { page } = await searchParams;
-  const me: any = await getCachedMyAccount();
+  const me: any = await getCachedMyAccount() ?? (USE_MOCK_DATA ? mockMyAccount : null);
+  
   if (!me) {
     return <RedirectWithSkeleton to={`/`} />;
   }
 
+  // Obter email e id do utilizador
+  const userEmail = me?.user?.email ?? me?.email;
+  const userId = me?.user?.user_id ?? me?.id;
+
   const resp = await getProfilesByUserAndAppCode({
-    user_email: me?.email,
-    user_id: me?.id,
+    user_email: userEmail,
+    user_id: userId,
   });
 
   const profiles = buildProfilesFromResponse(resp);
@@ -32,5 +38,4 @@ export default async function IndexPage({
   }
 
   redirect(`/formacao/${first.id}`);
-  //return <RedirectWithSkeleton to={`/formacao/${first.id}`} />;
 }

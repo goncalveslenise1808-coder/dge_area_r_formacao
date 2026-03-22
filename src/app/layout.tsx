@@ -8,6 +8,7 @@ import {getCachedMyAccount} from "./cache/cached-my-account";
 import {ReactQueryProvider} from "@/provider/ReactQueryProvider";
 import ProgressBarProviders from "@/provider/ProgressWrapper";
 import {ThemeProvider} from "next-themes";
+import { USE_MOCK_DATA } from "@/services/mock/data";
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -23,7 +24,8 @@ export default async function RootLayout({
 }) {
     const data: any = await getCachedMyAccount();
 
-    if (!data) {
+    // Em modo mock, sempre renderizar a aplicação (não redirecionar para login)
+    if (!data && !USE_MOCK_DATA) {
         return (
             <html lang="pt" suppressHydrationWarning>
             <body className={`${inter.className}`}>
