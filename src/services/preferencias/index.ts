@@ -2,6 +2,7 @@
 import {customFetch} from "@/lib/customFetch";
 import {FormacaoResponse} from "@/services/preferencias/type";
 import {mapPreferencias} from "@/services/preferencias/mapPreferencias";
+import { mockFormacaoResponse, USE_MOCK_DATA } from "@/services/mock/data";
 
 export interface PreferenciasParams {
     entidadeId?: string
@@ -12,21 +13,30 @@ export interface PreferenciasParams {
 }
 
 export async function getPreferencias(params: PreferenciasParams) {
+    // Usar dados mock em desenvolvimento
+    if (USE_MOCK_DATA) {
+        return mapPreferencias(mockFormacaoResponse);
+    }
 
-    const query = new URLSearchParams({
-        entidadeId: params?.entidadeId || "",
-        familiaId: params?.familiaId || "",
-        qualificacaoId: params?.qualificacaoId || "",
-        moduloId: params?.moduloId || "",
-        moduloOrigem: params?.moduloOrigem || ""
-    }).toString()
+    try {
+        const query = new URLSearchParams({
+            entidadeId: params?.entidadeId || "",
+            familiaId: params?.familiaId || "",
+            qualificacaoId: params?.qualificacaoId || "",
+            moduloId: params?.moduloId || "",
+            moduloOrigem: params?.moduloOrigem || ""
+        }).toString()
 
-    const response = await customFetch<FormacaoResponse>(
-        `/preferencias?${query}`,
-        {
-            method: "GET"
-        }
-    )
+        const response = await customFetch<FormacaoResponse>(
+            `/preferencias?${query}`,
+            {
+                method: "GET"
+            }
+        )
 
-    return mapPreferencias(response);
+        return mapPreferencias(response);
+    } catch (error) {
+        console.error("Erro ao buscar preferências:", error);
+        return mapPreferencias(mockFormacaoResponse); // Fallback para mock
+    }
 }

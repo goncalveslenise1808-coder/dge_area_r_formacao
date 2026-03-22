@@ -3,6 +3,7 @@ import {customFetch} from "@/lib/customFetch";
 import {mapMotivosFalta, mapperListaAusencia} from "@/services/ausencias/getListAusencia/mapper";
 import {IAusenciaList, MotivoFalta} from "@/services/ausencias/getListAusencia/type";
 import {customFetchBaseAPI} from "@/lib/customFetchBaseAPI";
+import { mockAusencias, mockMotivosFalta, USE_MOCK_DATA } from "@/services/mock/data";
 
 export async function getListAusencia({
     pessoaId,
@@ -11,6 +12,10 @@ export async function getListAusencia({
     pessoaId: number
     selectedCandidateId?: number
 }){
+    // Usar dados mock em desenvolvimento
+    if (USE_MOCK_DATA) {
+        return mockAusencias;
+    }
 
     try {
         const data = await customFetch<IAusenciaList[]>(
@@ -23,9 +28,10 @@ export async function getListAusencia({
         return mapperListaAusencia(data);
     }catch (error: any){
         if (error.status === 404) {
-            return null;
+            return mockAusencias; // Fallback para mock
         }
-        throw error;
+        console.error("Erro ao buscar ausências:", error);
+        return mockAusencias; // Fallback para mock
     }
 }
 
@@ -36,20 +42,26 @@ export async function getMotivosFalta({
     dad: string;
     domains: string;
 }): Promise<MotivoFalta[] | null> {
+    // Usar dados mock em desenvolvimento
+    if (USE_MOCK_DATA) {
+        return mockMotivosFalta;
+    }
+
     try {
         const data = await customFetchBaseAPI<any>(
             `/domains?dad=${dad}&domains=${domains}`,
             { method: "GET" }
         );
 
-        if (!data) return null;
+        if (!data) return mockMotivosFalta;
 
         return mapMotivosFalta(data);
     } catch (error: any) {
         if (error.status === 404) {
-            return null;
+            return mockMotivosFalta; // Fallback para mock
         }
-        throw error;
+        console.error("Erro ao buscar motivos de falta:", error);
+        return mockMotivosFalta; // Fallback para mock
     }
 }
 

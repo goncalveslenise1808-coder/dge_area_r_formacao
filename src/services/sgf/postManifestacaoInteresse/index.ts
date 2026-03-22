@@ -1,17 +1,26 @@
 'use server'
 import {customFetch} from "@/lib/customFetch";
 import {ManifestacaoFormData} from "@/components/templates/sgf/Manifestacao/hooks/Schema/useSchema";
+import { USE_MOCK_DATA } from "@/services/mock/data";
 
 interface ManiInteresseProps {
     success: boolean,
     message: string,
-    data: {}
+    data: Record<string, unknown>
 }
 
 export async function postManifestacaoInteresse(
     data: ManifestacaoFormData,
     pessoaId: number | undefined
 ) {
+    // Em modo mock, simular sucesso
+    if (USE_MOCK_DATA) {
+        return {
+            success: true,
+            message: "Manifestação de interesse registada com sucesso",
+            data: { id: Date.now() }
+        };
+    }
 
     if (!pessoaId) {
         throw new Error("pessoaId é obrigatório");
@@ -19,36 +28,45 @@ export async function postManifestacaoInteresse(
 
     const formData = new FormData();
 
-    const appendFormData = (data: any, parentKey?: string) => {
-        if (data === null || data === undefined) return;
+    const appendFormData = (formDataObj: Record<string, unknown>, parentKey?: string) => {
+        if (formDataObj === null || formDataObj === undefined) return;
 
-        if (data instanceof File) {
-            formData.append(parentKey!, data);
-        } else if (Array.isArray(data)) {
-            data.forEach((item, index) => {
+        if (formDataObj instanceof File) {
+            formData.append(parentKey!, formDataObj);
+        } else if (Array.isArray(formDataObj)) {
+            formDataObj.forEach((item, index) => {
                 appendFormData(item, `${parentKey}[${index}]`);
             });
-        } else if (typeof data === "object") {
-            Object.keys(data).forEach(key => {
+        } else if (typeof formDataObj === "object") {
+            Object.keys(formDataObj).forEach(key => {
                 appendFormData(
-                    data[key],
+                    (formDataObj as Record<string, unknown>)[key] as Record<string, unknown>,
                     parentKey ? `${parentKey}.${key}` : key
                 );
             });
         } else {
-            formData.append(parentKey!, data);
+            formData.append(parentKey!, formDataObj as string);
         }
     };
 
-    appendFormData(data);
+    appendFormData(data as unknown as Record<string, unknown>);
 
-    const resp = await customFetch<ManiInteresseProps>(
-        `/manifestacao-interesse?pessoaId=${pessoaId}`,
-        {
-            method: "POST",
-            body: formData,
-        }
-    );
+    try {
+        const resp = await customFetch<ManiInteresseProps>(
+            `/manifestacao-interesse?pessoaId=${pessoaId}`,
+            {
+                method: "POST",
+                body: formData,
+            }
+        );
 
-    return resp
+        return resp;
+    } catch (error) {
+        console.error("Erro ao enviar manifestação de interesse:", error);
+        return {
+            success: false,
+            message: "Erro ao enviar manifestação de interesse",
+            data: {}
+        };
+    }
 }

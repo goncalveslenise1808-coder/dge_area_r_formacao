@@ -3,6 +3,7 @@ import {customGlobalFetch} from "@/lib/customGlobalFetch";
 import {mapperProcesso} from "@/services/equivalencia/getEquivalencia/mapper";
 import {customFetchDominio} from "@/lib/customFetchDominio";
 import {IProcessoSend} from "@/services/equivalencia/getEquivalencia/interface/interface-data_pdd_enviado";
+import { mockProcessos, USE_MOCK_DATA } from "@/services/mock/data";
 
 interface GetDataEquivalenciaParams {
     numero?: string;
@@ -15,6 +16,22 @@ interface GetDataEquivalenciaParams {
 }
 
 export async function getDataEquivalencia(props: GetDataEquivalenciaParams) {
+    // Usar dados mock em desenvolvimento
+    if (USE_MOCK_DATA) {
+        // Filtrar processos mock pelo app_dad se especificado
+        const { app_dad, tipo } = props;
+        let filteredProcessos = mockProcessos;
+        
+        if (app_dad) {
+            filteredProcessos = filteredProcessos.filter(p => p.app_dad === app_dad);
+        }
+        if (tipo) {
+            filteredProcessos = filteredProcessos.filter(p => p.tipo === tipo);
+        }
+        
+        return filteredProcessos;
+    }
+
     try {
         const {pessoa_id, app_dad, tipo} = props;
         const params = new URLSearchParams();
@@ -31,14 +48,14 @@ export async function getDataEquivalencia(props: GetDataEquivalenciaParams) {
         // validação
         if (!Array.isArray(data)) {
             console.error("Resposta inválida da API:", data);
-            return [];
+            return mockProcessos; // Fallback para mock
         }
 
         return data.map(mapperProcesso);
 
     } catch (error) {
         console.error("Erro ao buscar processos:", error);
-        return [];
+        return mockProcessos; // Fallback para mock
     }
 }
 
